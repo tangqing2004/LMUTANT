@@ -33,6 +33,7 @@ def main():
     config = ExpConfig()
     save_path = 'model.pt'
 
+
     # 数据加载
     (train_data, _), (test_data, test_label) = get_data(config.dataset,
                                                         config.max_train_size,
@@ -66,6 +67,14 @@ def main():
                             config.window_length, config.input_dim, True)
     test_loader = get_loader(test_data, config.batch_size,
                              config.window_length, config.input_dim, False)
+
+    #插入检查代码
+    # 在数据预处理后添加
+    print("Processed Data Shapes:")
+    print(f"val_data: {val_data.shape}, val_label: {val_label.shape}")
+    print(f"test_data: {test_data.shape}, test_label: {test_label.shape}")
+
+
 
     # 模型初始化
     model = MUTANT(config.input_dim, w_size, config.hidden_size,
@@ -105,11 +114,11 @@ def main():
             pbar.set_postfix(loss=loss.item())
 
         # 验证
-        model.eval()
-        val_score = model.is_anomaly(val_loader,
-                                     len(val_loader),
-                                     len(val_loader.dataset) % config.batch_size)
-        t, th = bf_search(val_score, val_label[-len(val_score):], 700)
+        # 评估部分修改
+        val_score = model.is_anomaly(val_loader)
+        print(f"[Debug] val_score len: {len(val_score)}, val_label len: {len(val_label)}")
+        t, th = bf_search(val_score, val_label, 700)
+
 
         # 保存最佳模型
         if t[0] > best_f1:
@@ -125,6 +134,8 @@ def main():
                 }
             }, save_path)
             print(f"New best model saved at epoch {epoch} with f1 {best_f1:.4f}")
+
+
 
     # 最终测试
     model.load_state_dict(torch.load(save_path)['model_state'])
