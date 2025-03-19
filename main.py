@@ -40,19 +40,23 @@ def main():
                                                         train_start=config.train_start,
                                                         test_start=config.test_start)
 
-    # 数据分割
+    # 数据分割后调整标签长度
     n = int(test_data.shape[0] * config.val)
     test_data, val_data = test_data[:-n], test_data[-n:]
     test_label, val_label = test_label[:-n], test_label[-n:]
 
-    # 窗口处理
+    # 窗口处理函数
     def window_data(data):
         return data[np.arange(config.window_length)[None, :] +
                     np.arange(data.shape[0] - config.window_length)[:, None]]
 
+    # 应用窗口处理并调整标签
     train_data = window_data(train_data)
-    val_data = window_data(val_data)
+    val_data = window_data(val_data)  # 形状变为 (n - w+1, w, f)
+    val_label = val_label[config.window_length - 1:]  # 关键调整
+
     test_data = window_data(test_data)
+    test_label = test_label[config.window_length - 1:]
 
     # 数据加载器
     w_size = config.input_dim * config.out_dim

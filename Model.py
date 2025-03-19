@@ -159,11 +159,16 @@ class MUTANT(nn.Module):
 
     def is_anomaly(self, x, num_t, con_t):
         score = []
+        total_samples = 0
         for i, inputs in enumerate(x):
             p = self.reconstructed_probability(inputs)
-            if i == num_t:
-                p = p[:con_t]
+            total_samples += p.shape[0]  # 统计总样本数
             score = np.concatenate((score, p))
+
+        # 验证样本总数与数据长度一致
+        assert total_samples == len(x.dataset), \
+            f"样本数{total_samples} ≠ 数据集长度{len(x.dataset)}"
+
         return np.array(score)
 
     def reconstructed_probability(self, x):
