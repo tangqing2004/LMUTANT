@@ -53,8 +53,6 @@ def main():
     num_t = int(test_data.shape[0]/config.batch_size)
     con_t = test_data.shape[0] % config.batch_size
 
-    w_size = config.input_dim * config.out_dim
-
     train_loader = get_loader(train_data, batch_size=config.batch_size,
                               window_length=config.window_length, input_size=config.input_dim, shuffle=True)
     val_loader = get_loader(val_data, batch_size=config.batch_size,
@@ -62,74 +60,10 @@ def main():
     test_loader = get_loader(test_data, batch_size=config.batch_size,
                               window_length=config.window_length, input_size=config.input_dim, shuffle=False)
 
-    model = MUTANT(config.input_dim, w_size, config.hidden_size, config.latent_size, config.batch_size, config.window_length, config.out_dim)
-    optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-    print("Starting training...")
-    save_path = 'model.pt'
-    flag = 0
-    f1 = -1
-    for epoch in range(10):
-        l = 0
-        i = 0
-        for inputs in tqdm(train_loader):
-            loss = model(inputs)
-            loss.backward()
-            if(i% config.N == 0):
-                optimizer.step()
-                optimizer.zero_grad()
-            i += 1
+    print("1111\n", num_val)
+    print(len(val_loader))
 
-            
-        if(flag == 1):
-            model.load_state_dict(torch.load(save_path))
-        val_score = model.is_anomaly(val_loader, num_val, con_val)
-        t, th = bf_search(val_score, val_label[-len(val_score):], step_num=700)
-        if(t[0] > f1):
-            f1 = t[0]
-            torch.torch.save(model.state_dict(), save_path)
-            flag = 1
-
-    model.load_state_dict(torch.load(save_path))
-    test_score = model.is_anomaly(test_loader, num_t, con_t)
-
-    t, th = bf_search(test_score, test_label[-len(test_score):], step_num=700)
-    print('*****************************************************')
-    print('dataset:', config.dataset)
-    print('th:', th)
-    print("TP:", t[3])
-    print("FP:", t[5])
-    print("FN:", t[6])
-    print("precision:", t[1], "recall:", t[2], "f_score", t[0])
-
-    # 将结果保存为CSV文件
-    results = {
-        'Dataset': [config.dataset],
-        'Threshold': [th],
-        'TP': [t[3]],
-        'FP': [t[5]],
-        'FN': [t[6]],
-        'Precision': [t[1]],
-        'Recall': [t[2]],
-        'F-Score': [t[0]]
-    }
-
-    # 将字典转换为DataFrame
-    df_result = pd.DataFrame(results)
-
-    # 检查CSV文件是否存在
-    try:
-        # 如果文件存在，读取文件并将新数据追加到最后一行
-        existing_df = pd.read_csv('results.csv')
-        combined_df = pd.concat([existing_df, df_result], ignore_index=True)
-    except FileNotFoundError:
-        # 如果文件不存在，直接使用当前数据
-        combined_df = df_result
-
-    # 将结果保存到CSV文件
-    combined_df.to_csv('results.csv', index=False)
-
-    return t[1], t[2], t[0]
 
 if __name__ == '__main__':
-   main()
+    main()
